@@ -1,7 +1,7 @@
-from types import FunctionType
 from typing import Any
-
 from sqlalchemy import MetaData,create_engine, schema
+from sqlalchemy.engine import CursorResult
+
 
 class Db_connect():
 
@@ -29,12 +29,17 @@ class Db_connect():
         self._base = Base
         self._meta = MetaData()
         self._session = session
-        self._write_represent = Create_representation()
 
     #EXECUTE INSERT, UPDATE, DELETE COMMANDS
     def exec_dml_com(self,query:Any):
         with self._engine.connect() as conn:
             conn.execute(query)
+
+    #EXECUTE CONSULT COMMANDS
+    def exec_dql_comm(self,query:Any) -> CursorResult:
+        with self._engine.connect() as conn:
+            result = conn.execute(query)
+        return result
 
 
     #CREATE TABLES
@@ -42,7 +47,6 @@ class Db_connect():
         import inspect
         meta = self._meta
         engine = self._engine
-        write = self._write_represent
         textFunc = inspect.getsource(table)
         write.rewrite_table(textFunc)
         def create(metadata: MetaData = meta):
@@ -50,33 +54,3 @@ class Db_connect():
             metadata.create_all(engine)
 
         return create
-
-
-#CREATE REPRESENTATION OF TABLES TO PERFORM OPERATIONS WITH SQLALCHEMY AND NOT JUST SQL RAW
-class Representation():
-    def __init__(self):
-        from configs.environment_variables import get_environment_variables as env
-        import os
-
-        try:
-            with open(os.path.join(env("main_dir") + "\\models", "representation.py"), "r") as f:
-                if f.find("import") == -1:
-                    with open(os.path.join(env("main_dir") + "\\models", "representation.py"), "w") as f:
-                        f.write("""from sqlalchemy import Column,Integer,String,DateTime, MetaData, Table, ForeignKey
-                                    """)
-        except:
-            with open(os.path.join(env("main_dir") + "\\models", "representation.py"), "w") as f:
-                f.write("""from sqlalchemy import Column,Integer,String,DateTime, MetaData, Table, ForeignKey
-                            """)
-
-    def rewrite_table(self,text):
-        import os
-        from configs.environment_variables import get_environment_variables as env
-
-        representationTable = (text.split("):")[1].replace("    ", "").replace("metadata,","").replace("\n",""))
-
-        with open(os.path.join(env("main_dir") + "/models", "representation.py"), "r") as f:
-            text = f.read()
-        if text.find(representationTable) == -1:
-            with open(os.path.join(env("main_dir") + "/models", "representation.py"), "a") as f:
-                f.write("\n" + representationTable)
