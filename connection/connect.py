@@ -2,7 +2,6 @@ from typing import Any
 from sqlalchemy import MetaData,create_engine, schema
 from sqlalchemy.engine import CursorResult
 
-
 class Db_connect():
 
     def __init__(self):
@@ -12,14 +11,14 @@ class Db_connect():
 
 
         #CREATE ENGINE AND CONNECT WITH DATABASE
-        engine = create_engine(url=f"postgresql://{env('user')}:{env('password')}@{env('host_name')}/{env('database_name')}",
+        engine = create_engine(url=f"postgresql://{env('user')}:{env('password')}@{env('host')}:{env('port')}/{env('database_name')}",
                                echo=True)
         Base = declarative_base()
         SessionLocal = sessionmaker(bind=engine)
         session = SessionLocal()
 
 
-        # CREATE SCHEMAS IF NOT EXIST
+        # CREATE SCHEMAS
         schemas = ['any_schema']
         for schemaName in schemas:
             if not engine.dialect.has_schema(engine, schemaName):
@@ -43,14 +42,6 @@ class Db_connect():
 
 
     #CREATE TABLES
-    def create_table(self, table):
-        import inspect
-        meta = self._meta
-        engine = self._engine
-        textFunc = inspect.getsource(table)
-        write.rewrite_table(textFunc)
-        def create(metadata: MetaData = meta):
-            table(metadata)
-            metadata.create_all(engine)
-
-        return create
+    def create_table(self):
+        from models import any_schema
+        any_schema.metadata
